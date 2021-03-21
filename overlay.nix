@@ -13,7 +13,9 @@ self: super: {
       CGROUP_FREEZER = yes;
     };
   };
-  lx2k = self.lib.makeScope self.newScope (self: with self; {
+
+
+  lx2k = self.lib.makeScope self.newScope (self: with self; rec {
     ddrSpeed = 2400;
 
     rcw = self.callPackage ./pkgs/rcw { };
@@ -34,6 +36,10 @@ self: super: {
 
     isoImage = self.callPackage ./pkgs/isoImage { };
 
+    sdCard = self.callPackage ./pkgs/sdCard {
+      uefi = uefi;
+      isoImage = isoImage;
+    };
   });
 
   lx2k-2400 = self.lx2k;
