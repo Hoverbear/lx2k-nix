@@ -133,6 +133,57 @@ UEFI firmware (version  built at 00:00:00 on Jan  1 1980)
 
 After, a UEFI boot menu will be presented. From here, proceed like a normal NixOS install.
 
+# Flake
+
+You can use this repo as a Flake.
+
+> You may need to add add this to your NixOS config (or similar via `~/.config/nix/nix.conf`):
+>
+> ```nix
+> {
+>   nix.package = pkgs.nixUnstable;
+>   nix.extraOptions = ''
+>     experimental-features = nix-command flakes
+>   '';
+> }
+> ```
+
+```bash
+nix build .#lx2k-3200.uefi --out-link uefi.img
+nix build .#packages."aarch64-linux".isoImage --out-link isoImage
+```
+
+Once your image is built, you can use this repo in your `flake.nix` as a module:
+
+```nix
+{
+  description = "Example Flake";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    lx2k-nix.url = "github:hoverbear/lx2k-nix";
+  };
+
+  outputs = { self, nixpkgs, lx2k-nix }: {
+    example-system = nixpkgs.lib.nixosSystem {
+      system = "aarch64-linux";
+      modules = [
+        lx2k-nix.nixosModules.lx2k
+        # ... Rest
+      ];
+    };
+  };
+}
+```
+
+The settings adjusted by this module are viewable and documented inside `flake.nix`.
+
+Then you could switch a NixOS host to the new configuration with:
+
+```bash
+sudo nixos-rebuild switch --flake .#example-system
+```
+
 # Notes
 
 * `make menuconfig`

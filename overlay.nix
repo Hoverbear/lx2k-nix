@@ -1,18 +1,6 @@
 self: super: {
+  linux_lx2k = self.callPackage ./pkgs/linux {};
   linuxPackages_lx2k = super.linuxPackagesFor self.linux_lx2k;
-  linux_lx2k = self.buildLinux {
-    src = super.fetchFromGitHub {
-      owner = "SolidRun";
-      repo = "linux-stable";
-      rev = "bc1160fd43de6bc9a09e25c027a057e1376e5b9a";
-      sha256 = "1cq36vpsd68g144gn7f3jjkl2bwibqv7nrrrjgvkdj1lfijcwm14";
-    };
-    version = "5.10.5";
-    kernelPatches = [ ];
-    structuredExtraConfig = with super.lib.kernel; {
-      CGROUP_FREEZER = yes;
-    };
-  };
   lx2k = self.lib.makeScope self.newScope (self: with self; {
     ddrSpeed = 2400;
 
