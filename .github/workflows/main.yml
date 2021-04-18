@@ -1,0 +1,68 @@
+name: Main
+on: push
+
+jobs:
+  isoImage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/setup-qemu-action@v1
+        with:
+          image: tonistiigi/binfmt:latest
+          platforms: arm64
+      - uses: actions/checkout@v2
+      - run: |
+          curl -L https://nixos.org/nix/install | sh
+          . ~/.nix-profile/etc/profile.d/nix.sh
+
+          mkdir -p ~/.config/nix
+          echo <<-EOF > ~/.config/nix/nix.conf
+            experimental-features = nix-command flakes
+          EOF
+          nix-env -iA nixpkgs.nixUnstable
+
+          mkdir -p ~/.config/nixpkgs/
+          echo "{ allowUnsupportedSystem = true; }" > ~/.config/nixpkgs/config.nix
+          export NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1
+          
+          nix build --option system aarch64-linux .#isoImage --out-link isoImage --experimental-features "nix-command flakes"
+      - uses: actions/upload-artifact@v2
+        with:
+          path: isoImage
+  uefi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/setup-qemu-action@v1
+        with:
+          image: tonistiigi/binfmt:latest
+          platforms: arm64
+      - uses: actions/checkout@v2
+      - run: |
+          curl -L https://nixos.org/nix/install | sh
+          . ~/.nix-profile/etc/profile.d/nix.sh
+
+          mkdir -p ~/.config/nix
+          echo <<-EOF > ~/.config/nix/nix.conf
+            experimental-features = nix-command flakes
+          EOF
+          nix-env -iA nixpkgs.nixUnstable
+          
+          mkdir -p ~/.config/nixpkgs/
+          echo "{ allowUnsupportedSystem = true; }" > ~/.config/nixpkgs/config.nix
+          export NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM=1
+
+          nix build --option system aarch64-linux .#lx2k-2400.uefi --out-link lx2k-2400.uefi --experimental-features "nix-command flakes"
+          nix build --option system aarch64-linux .#lx2k-2600.uefi --out-link lx2k-2600.uefi --experimental-features "nix-command flakes"
+          nix build --option system aarch64-linux .#lx2k-2900.uefi --out-link lx2k-2900.uefi --experimental-features "nix-command flakes"
+          nix build --option system aarch64-linux .#lx2k-3200.uefi --out-link lx2k-3200.uefi --experimental-features "nix-command flakes"
+      - uses: actions/upload-artifact@v2
+        with:
+          path: lx2k-2400.uefi
+      - uses: actions/upload-artifact@v2
+        with:
+          path: lx2k-2600.uefi
+      - uses: actions/upload-artifact@v2
+        with:
+          path: lx2k-2900.uefi
+      - uses: actions/upload-artifact@v2
+        with:
+          path: lx2k-3200.uefi
