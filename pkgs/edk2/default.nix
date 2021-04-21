@@ -1,4 +1,4 @@
-{ stdenv, lib, fetchFromGitHub, libuuid, python3, bc }:
+{ stdenv, lib, buildPackages, fetchFromGitHub, libuuid, python3, bc }:
 let
   edk2 = stdenv.mkDerivation {
     pname = "edk2-solidrun";
@@ -11,8 +11,10 @@ let
       sha256 = "1af847y3hld8ky09m47xl17m0a4ksqkc4swpv44ycwls512z2fjw";
     };
 
-    buildInputs = [ libuuid ];
-    nativeBuildInputs = [ python3 ];
+    depsBuildBuild = [ buildPackages.stdenv.cc ];
+    nativeBuildInputs = [ libuuid python3 ];
+
+    postPatch = "patchShebangs BaseTools/BinWrappers";
 
     makeFlags = [ "-C BaseTools" ]
       ++ lib.optional (stdenv.cc.isClang) [ "BUILD_CC=clang BUILD_CXX=clang++ BUILD_AS=clang" ];
@@ -33,16 +35,23 @@ let
       mkDerivation = projectDscPath: attrs: stdenv.mkDerivation ({
         inherit (edk2) src;
 
-        buildInputs = [ bc python3 ] ++ attrs.buildInputs or [ ];
+        nativeBuildInputs = [ bc python3 ] ++ attrs.nativeBuildInputs or [ ];
 
         prePatch = ''
           rm -rf BaseTools
           ln -sv ${edk2}/BaseTools BaseTools
         '';
 
-        configurePhase = ''
+        configurePhase = let
+          crossPrefix =
+            if stdenv.hostPlatform != stdenv.buildPlatform then
+              stdenv.cc.targetPrefix
+            else
+              "";
+        in ''
           runHook preConfigure
           export WORKSPACE="$PWD"
+          export GCC5_AARCH64_PREFIX=${crossPrefix} DTCPP_PREFIX=${crossPrefix}
           . ${edk2}/edksetup.sh BaseTools
           runHook postConfigure
         '';
@@ -58,7 +67,7 @@ let
           mv -v Build/*/* $out
           runHook postInstall
         '';
-      } // removeAttrs attrs [ "buildInputs" ]);
+      } // removeAttrs attrs [ "nativeBuildInputs" ]);
     };
   };
 in

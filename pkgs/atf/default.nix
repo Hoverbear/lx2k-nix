@@ -1,5 +1,6 @@
 { stdenv
 , lib
+, buildPackages
 , fetchFromGitHub
 , tianocore
 , rcw
@@ -11,6 +12,7 @@
 assert lib.elem bootMode [ "sd" "spi" ];
 let
   atfBoot = if bootMode == "sd" then "sd" else "flexspi_nor";
+  isCross = stdenv.buildPlatform != stdenv.hostPlatform;
 in
 stdenv.mkDerivation rec {
   pname = "atf";
@@ -25,7 +27,8 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  buildInputs = [ openssl ];
+  depsBuildBuild = [ buildPackages.stdenv.cc ];
+  nativeBuildInputs = [ openssl ];
 
   makeFlags = [
     "PLAT=lx2160acex7"
@@ -35,6 +38,7 @@ stdenv.mkDerivation rec {
     "GENERATE_COT=0"
     "BOOT_MODE=${atfBoot}"
     "SECURE_BOOT=false"
+  ] ++ lib.optional isCross "CROSS_COMPILE=${stdenv.cc.targetPrefix}" ++ [
     "all"
     "fip"
     "pbl"

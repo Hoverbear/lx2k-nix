@@ -1,5 +1,6 @@
 { stdenv
 , lib
+, buildPackages
 , fetchFromGitHub
 , python3
 , gettext
@@ -22,6 +23,10 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ python3 gettext ];
+
+  postPatch = ''
+    sed -i 's@gcc@${buildPackages.stdenv.cc}/bin/gcc@' Makefile.inc rcw.py
+  '';
 
   preBuild = ''
     cd lx2160acex7

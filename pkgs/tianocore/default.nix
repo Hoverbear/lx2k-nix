@@ -15,7 +15,7 @@ let
 in
 edk2.mkDerivation "${edk2-platforms}/Platform/SolidRun/LX2160aCex7/LX2160aCex7.dsc" {
   name = "tianocore-honeycomb-lx2k";
-  buildInputs = [ utillinux nasm iasl dtc ];
+  nativeBuildInputs = [ utillinux nasm iasl dtc ];
   hardeningDisable = [ "format" "stackprotector" "pic" "fortify" ];
   preBuild = ''
     export PACKAGES_PATH=${edk2}:${edk2-platforms}:${edk2-non-osi}
