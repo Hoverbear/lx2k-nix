@@ -6,10 +6,22 @@
   };
 
   outputs = { self, nixos }: {
+     lib = {
+      platforms.lx2k = (nixos.lib.systems.elaborate "aarch64-linux") // {
+        sys.gcc = {
+          fpu = "neon";
+          cpu = "cortex-a72";
+          arch = "armv8-a+crc+crypto";
+        };
+      };
+    };
+
     packages = {
       "aarch64-linux" = let
         pkgs = import nixos {
           system = "aarch64-linux";
+          nixpkgs.localSystem.system = "aarch64-linux";
+          nixpkgs.localSystem.platform = self.lib.platforms.lx2k;
         };
       in rec {
         isoImage = self.nixosConfigurations.isoImage.config.system.build.isoImage;
@@ -59,6 +71,8 @@
         boot.kernelModules = [
           "amc6821" # via sensors-detect
         ];
+        nixpkgs.localSystem.system = "aarch64-linux";
+        nixpkgs.localSystem.platform = self.lib.platforms.lx2k;
       };
     };
   };
